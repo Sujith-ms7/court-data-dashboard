@@ -40,7 +40,7 @@
         .toast {
             padding: 1rem;
             border-radius: 0.5rem;
-            color: rgb(238, 133, 28);
+            color: white;
             font-weight: 500;
             opacity: 0;
             transform: translateX(100%);
@@ -172,19 +172,19 @@
         async function fetchCaseData(details) {
             showLoadingModal('Fetching case details...');
             try {
-                // Using a simulated fetch for demonstration
-                const response = await new Promise(resolve => setTimeout(() => {
-                    const isSuccess = Math.random() > 0.2; // 80% success
-                    if (isSuccess) {
-                        resolve({ ok: true, json: () => Promise.resolve({ status: "Pending", parties: `${details.type} ${details.number}/${details.year}` }) });
-                    } else {
-                        resolve({ ok: false, json: () => Promise.resolve({ message: "Case not found." }) });
-                    }
-                }, 1500));
+                // Replace simulated fetch with real API call
+                const API_ENDPOINT = 'https://court-data-dashboard.onrender.com/api/scrape';
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(details),
+                });
 
                 const data = await response.json();
                 if (!response.ok) {
-                    throw new Error(data.message);
+                    throw new Error(data.message || 'An unknown server error occurred.');
                 }
 
                 showToast('Search successful!', 'success');
