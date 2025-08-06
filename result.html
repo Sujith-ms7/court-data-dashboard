@@ -1,0 +1,43 @@
+<!-- templates/result.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Case Result</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>📄 Case Details</h1>
+
+        <div class="status">
+            {% if result.hearing_status == "upcoming" %}
+                <span class="badge upcoming">Upcoming Hearing</span>
+            {% elif result.hearing_status == "expired" %}
+                <span class="badge expired">Past Hearing</span>
+            {% else %}
+                <span class="badge none">No Hearing Date</span>
+            {% endif %}
+        </div>
+
+        <div class="details">
+            <p><strong>Case Type:</strong> {{ result.case_type }}</p>
+            <p><strong>Case Number:</strong> {{ result.case_number }}</p>
+            <p><strong>Filing Year:</strong> {{ result.filing_year }}</p>
+            <p><strong>Petitioner:</strong> {{ result.petitioner }}</p>
+            <p><strong>Respondent:</strong> {{ result.respondent }}</p>
+            <p><strong>Status:</strong> {{ result.status }}</p>
+            <p><strong>Next Hearing:</strong> {{ result.next_hearing or "Not Available" }}</p>
+            <p><strong>Judge:</strong> {{ result.judge or "N/A" }}</p>
+        </div>
+
+        <form action="{{ url_for('download_pdf') }}" method="POST">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="data" value="{{ result | tojson | safe }}">
+            <button type="submit" class="btn-download">⬇️ Download as PDF</button>
+        </form>
+
+        <a href="{{ url_for('index') }}" class="back-btn">🔙 Search Again</a>
+    </div>
+</body>
+</html>

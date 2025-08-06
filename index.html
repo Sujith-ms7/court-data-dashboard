@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Court-Data Dashboard with Notifications</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loader {
+            border: 4px solid rgba(0, 0, 0, .1);
+            border-left-color: #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        .dark .loader {
+            border: 4px solid rgba(255, 255, 255, .1);
+            border-left-color: #3498db;
+        }
+        .history-item { cursor: pointer; transition: background-color 0.2s; }
+        .history-item:hover { background-color: #f0f4f8; }
+        .dark .history-item:hover { background-color: #1f2937; }
+
+        /* Toast Notification Styles */
+        #toast-container {
+            position: fixed;
+            top: 1.25rem;
+            right: 1.25rem;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .toast {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            color: rgb(238, 133, 28);
+            font-weight: 500;
+            opacity: 0;
+            transform: translateX(100%);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            animation: slideIn 0.5s forwards, fadeOut 0.5s 4s forwards;
+        }
+        .toast.error { background-color: #ef4444; } /* Red */
+        .toast.success { background-color: #22c55e; } /* Green */
+
+        @keyframes slideIn {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            to {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors duration-300">
+
+    <div id="toast-container"></div>
+
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+        <header class="relative text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">Delhi High Court Case Status</h1>
+            <p class="text-md text-gray-600 dark:text-gray-400 mt-2">An advanced tool to fetch and track case details.</p>
+            
+            <div class="absolute top-0 right-0">
+                <button id="theme-toggle" class="p-2 rounded-lg bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+                    <svg id="theme-toggle-dark-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path></svg>
+                    <svg id="theme-toggle-light-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.121-3.536a1 1 0 011.414 0l.707.707a1 1 0 01-1.414 1.414l-.707-.707a1 1 0 010-1.414zM10 16a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zm-4.95-.464a1 1 0 00-1.414 1.414l.707.707a1 1 0 001.414-1.414l-.707-.707zm-3.536-2.121a1 1 0 010 1.414l.707.707a1 1 0 011.414-1.414l-.707-.707a1 1 0 01-1.414 0zm9.9-2.121a1 1 0 00-1.414 1.414l.707.707a1 1 0 001.414-1.414l-.707-.707z"></path></svg>
+                </button>
+            </div>
+        </header>
+
+        <main class="bg-white dark:bg-gray-800 p-6 md:p-8 rounded-xl shadow-lg">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="md:col-span-2">
+                    <section id="search-form-section">
+                        <h2 class="text-2xl font-semibold mb-4 border-b pb-2 border-gray-200 dark:border-gray-600">Case Search</h2>
+                        <form id="case-form" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="case_type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Case Type:</label>
+                                <select id="case_type" name="case_type" class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg"></select>
+                            </div>
+                            <div>
+                                <label for="case_year" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Filing Year:</label>
+                                <input type="text" id="case_year" name="case_year" placeholder="e.g., 2023" required class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="case_number" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Case Number:</label>
+                                <input type="text" id="case_number" name="case_number" placeholder="e.g., 1234" required class="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg">
+                            </div>
+                            <div class="md:col-span-2 text-center mt-4">
+                                <button type="submit" class="w-full md:w-auto bg-blue-600 text-white font-semibold py-3 px-8 rounded-lg hover:bg-blue-700">Fetch Details</button>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+                <div class="md:col-span-1">
+                    <section id="history-section">
+                        <h2 class="text-2xl font-semibold mb-4 border-b pb-2 border-gray-200 dark:border-gray-600">Recent Searches</h2>
+                        <ul id="history-list" class="space-y-2 max-h-60 overflow-y-auto">
+                            <li id="no-history" class="text-gray-500 dark:text-gray-400">No recent searches.</li>
+                        </ul>
+                    </section>
+                </div>
+            </div>
+            <section id="results-section" class="mt-10 hidden">
+                 <h2 class="text-2xl font-semibold mb-4 border-b pb-2 border-gray-200 dark:border-gray-600">Case Details</h2>
+                 <div id="results-content"></div>
+            </section>
+        </main>
+        
+        <footer class="text-center mt-8 text-sm text-gray-500 dark:text-gray-400"><p>Built for demonstration purposes.</p></footer>
+    </div>
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 hidden"></div>
+
+    <script>
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const darkIcon = document.getElementById('theme-toggle-dark-icon');
+        const lightIcon = document.getElementById('theme-toggle-light-icon');
+        const caseForm = document.getElementById('case-form');
+        const caseTypeSelect = document.getElementById('case_type');
+        const caseNumberInput = document.getElementById('case_number');
+        const caseYearInput = document.getElementById('case_year');
+        const historyList = document.getElementById('history-list');
+        const noHistoryMsg = document.getElementById('no-history');
+        const resultsSection = document.getElementById('results-section');
+        const resultsContent = document.getElementById('results-content');
+        const modal = document.getElementById('modal');
+        const toastContainer = document.getElementById('toast-container');
+
+        let currentCaseDetails = {};
+        const caseTypes = {"W.P.(C)": "Writ Petition (Civil)","CS(OS)": "Civil Suit (Original Side)","CRI.M.C.": "Criminal Miscellaneous Case","FAO": "First Appeal from Order"};
+
+        document.addEventListener('DOMContentLoaded', loadApp);
+        caseForm.addEventListener('submit', handleInitialSubmit);
+        themeToggleBtn.addEventListener('click', toggleTheme);
+        
+        function loadApp() {
+            loadTheme();
+            populateCaseTypes();
+            renderHistory();
+        }
+
+        function handleInitialSubmit(e) {
+            e.preventDefault();
+            const details = { type: caseTypeSelect.value, number: caseNumberInput.value.trim(), year: caseYearInput.value.trim() };
+            if (!details.number || !details.year) {
+                return showToast('Case Number and Year cannot be empty.', 'error');
+            }
+            if (!/^\d{4}$/.test(details.year)) {
+                return showToast('Please enter a valid 4-digit year.', 'error');
+            }
+            currentCaseDetails = details;
+            fetchCaseData(details);
+        }
+        
+        async function fetchCaseData(details) {
+            showLoadingModal('Fetching case details...');
+            try {
+                // Using a simulated fetch for demonstration
+                const response = await new Promise(resolve => setTimeout(() => {
+                    const isSuccess = Math.random() > 0.2; // 80% success
+                    if (isSuccess) {
+                        resolve({ ok: true, json: () => Promise.resolve({ status: "Pending", parties: `${details.type} ${details.number}/${details.year}` }) });
+                    } else {
+                        resolve({ ok: false, json: () => Promise.resolve({ message: "Case not found." }) });
+                    }
+                }, 1500));
+
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message);
+                }
+
+                showToast('Search successful!', 'success');
+                saveSearchToHistory(details);
+                renderHistory();
+                displayResults(data);
+            } catch (error) {
+                showErrorModal(error.message);
+            } finally {
+                hideModal();
+            }
+        }
+        
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toastContainer.appendChild(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, 4500);
+        }
+
+        function loadTheme() {
+            if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                darkIcon.classList.remove('hidden');
+                lightIcon.classList.add('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                darkIcon.classList.add('hidden');
+                lightIcon.classList.remove('hidden');
+            }
+        }
+
+        function toggleTheme() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            darkIcon.classList.toggle('hidden', !isDark);
+            lightIcon.classList.toggle('hidden', isDark);
+        }
+
+        function getHistory() {
+            return JSON.parse(localStorage.getItem('caseHistory') || '[]');
+        }
+        
+        function saveSearchToHistory(details) {
+            let history = getHistory();
+            const searchId = `${details.type}-${details.number}-${details.year}`;
+            history = history.filter(item => item.id !== searchId);
+            history.unshift({ id: searchId, ...details });
+            if (history.length > 10) history = history.slice(0, 10);
+            localStorage.setItem('caseHistory', JSON.stringify(history));
+        }
+        
+        function renderHistory() {
+            const history = getHistory();
+            historyList.innerHTML = '';
+            if (history.length === 0) {
+                const li = document.createElement('li');
+                li.className = 'text-gray-500 dark:text-gray-400';
+                li.textContent = 'No recent searches.';
+                historyList.appendChild(li);
+                return;
+            }
+            history.forEach(item => {
+                const li = document.createElement('li');
+                li.className = 'p-2 rounded history-item border-b border-gray-200 dark:border-gray-700';
+                li.textContent = `${item.type} ${item.number}/${item.year}`;
+                li.setAttribute('data-type', item.type);
+                li.setAttribute('data-number', item.number);
+                li.setAttribute('data-year', item.year);
+                li.addEventListener('click', (e) => {
+                    const target = e.currentTarget;
+                    caseTypeSelect.value = target.dataset.type;
+                    caseNumberInput.value = target.dataset.number;
+                    caseYearInput.value = target.dataset.year;
+                    caseForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                });
+                historyList.appendChild(li);
+            });
+        }
+        
+        function populateCaseTypes() {
+            caseTypeSelect.innerHTML = '';
+            for (const [code, name] of Object.entries(caseTypes)) {
+                const option = document.createElement('option');
+                option.value = code;
+                option.textContent = name;
+                caseTypeSelect.appendChild(option);
+            }
+        }
+        
+        function displayResults(data) {
+            resultsContent.innerHTML = `<p class="py-2 border-b border-gray-200 dark:border-gray-600"><strong>Parties:</strong> ${data.parties}</p><p class="py-2"><strong>Status:</strong> <span class="font-semibold px-3 py-1 text-sm rounded-full bg-green-200 text-green-800">${data.status}</span></p>`;
+            resultsSection.classList.remove('hidden');
+        }
+        
+        function showLoadingModal(message) {
+            modal.innerHTML = `<div class="bg-white dark:bg-gray-800 rounded-lg p-8 shadow-2xl text-center max-w-sm w-full"><div class="mx-auto loader mb-4"></div><p class="text-lg font-medium">${message}</p></div>`;
+            modal.classList.remove('hidden');
+        }
+        
+        function showErrorModal(errorMessage) {
+            modal.innerHTML = `<div class="bg-white dark:bg-gray-800 rounded-lg p-8 shadow-2xl text-center max-w-sm w-full"><p class="text-lg font-medium text-red-600">${errorMessage}</p><button onclick="hideModal()" class="mt-6 bg-red-500 text-white font-semibold py-2 px-6 rounded-lg hover:bg-red-600">Close</button></div>`;
+            modal.classList.remove('hidden');
+        }
+        
+        function hideModal() {
+            modal.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

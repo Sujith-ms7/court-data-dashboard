@@ -1,0 +1,107 @@
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f4f6f8;
+  color: #333;
+  margin: 0;
+  padding: 0;
+    font-family: Arial, sans-serif;
+    background: #ce2727;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+  max-width: 960px;
+  margin: 30px auto;
+  background: rgb(170, 57, 57);
+  padding: 20px 30px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+    max-width: 700px;
+    margin: auto;
+    background: #b13737;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #2c3e50;
+    text-align: center;
+    color: #2c3e50;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+.details p {
+    font-size: 16px;
+    margin: 8px 0;
+}
+
+.history-table th, .history-table td {
+  padding: 12px 16px;
+  border: 1px solid #ddd;
+  text-align: left;
+.btn-download, .back-btn {
+    display: inline-block;
+    margin-top: 20px;
+    padding: 10px 20px;
+    background: #2c3e50;
+    color: #fff;
+    border: none;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
+.history-table th {
+  background-color: #74c88d;
+.btn-download:hover, .back-btn:hover {
+    background: #34495e;
+}
+
+.badge {
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 0.9em;
+  color: white;
+    padding: 6px 12px;
+    border-radius: 5px;
+    font-weight: bold;
+    color: white;
+}
+
+.badge.upcoming {
+  background-color: #28a745;
+    background-color: #27ae60;
+}
+
+.badge.expired {
+  background-color: #dc3545;
+    background-color: #e74c3c;
+}
+
+.badge.none {
+  background-color: #6c757d;
+    background-color: #7f8c8d;
+}
+
+.back-button {
+  display: inline-block;
+  margin-top: 15px;
+  text-decoration: none;
+  padding: 8px 16px;
+  background: #007bff;
+  color: rgb(125, 215, 84);
+  border-radius: 6px;
+  transition: background 0.2s ease-in-out;
+}
+
+.back-button:hover {
+  background: #9b1f6a;
+.status {
+    margin-bottom: 20px;
+}

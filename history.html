@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Query History</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <div class="container">
+    <h1>Query History</h1>
+    
+    {% if queries and queries|length > 0 %}
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Case Type</th>
+            <th>Case Number</th>
+            <th>Filing Year</th>
+            <th>Status</th>
+            <th>Next Hearing</th>
+            <th>Date Queried</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for q in queries %}
+            <tr>
+              <td>{{ loop.index }}</td>
+              <td>{{ q.case_type }}</td>
+              <td>{{ q.case_number }}</td>
+              <td>{{ q.filing_year }}</td>
+              <td>
+                {% if q.result.get("hearing_status") == "upcoming" %}
+                  <span class="badge upcoming">Upcoming</span>
+                {% elif q.result.get("hearing_status") == "expired" %}
+                  <span class="badge expired">Expired</span>
+                {% else %}
+                  <span class="badge none">N/A</span>
+                {% endif %}
+              </td>
+              <td>{{ q.result.get("next_hearing", "—") }}</td>
+              <td>{{ q.timestamp }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>No past queries found.</p>
+    {% endif %}
+
+    <a class="back-button" href="{{ url_for('index') }}">← Back to Search</a>
+  </div>
+</body>
+</html>
